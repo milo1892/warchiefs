@@ -1,0 +1,71 @@
+import { expect, test } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import { createGame } from '../src/content/map';
+import { applyCommand } from '../src/game/commands';
+import { importText } from '../src/persistence/snapshot';
+import { createCampaign, importCampaign, openSaves } from './helpers/campaign';
+
+test('explores ruins, claims rewards, and handles peace/war through the UI', async ({ page }) => {
+  const fixture = applyCommand(createGame(300), { type: 'hero', cityId: 'city-0' });
+  fixture.armies[0].x = 7;
+  fixture.armies[0].y = 12;
+  fixture.proposals = [{ from: 1, to: 0, expires: 3 }];
+  await importCampaign(page, fixture, 'Legends');
+  await page.getByRole('button', { name: 'Explore Whisper Vault', exact: true }).click();
+  await expect(page.getByText('level 2:', { exact: false })).toBeVisible();
+  await page.getByText('Quests and ruins', { exact: true }).click();
+  await expect(page.getByText('Completed; reward granted.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Inspect Whisper Vault · Sealed', exact: true })).toBeVisible();
+  await page.getByText('Diplomacy', { exact: true }).click();
+  await page.getByRole('button', { name: 'Accept peace', exact: true }).click();
+  await expect(page.getByText('At peace: no entering their territory.', { exact: false })).toBeVisible();
+  await page.getByText('Cities', { exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect Dawnspire · Dawn Banner', exact: true }).click();
+  await expect(page.getByText('No legal route.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Declare war', exact: true }).click();
+  await expect(page.getByText('Route costs', { exact: false })).toBeVisible();
+  const exported = await openSaves(page);
+  const [download] = await Promise.all([page.waitForEvent('download'), exported.getByRole('button', { name: 'Export JSON', exact: true }).click()]);
+  const path = await download.path();
+  if (!path) throw new Error('Save was not downloaded.');
+  const actual = importText(await readFile(path, 'utf8')).state;
+  let expected = applyCommand(fixture, { type: 'explore', armyId: 'army-0' });
+  expected = applyCommand(expected, { type: 'respond', from: 1, accept: true });
+  expected = applyCommand(expected, { type: 'declare', to: 1 });
+  expect(actual).toEqual(expected);
+});
+
+test('shows victory when the final rival city and army fall', async ({ page }) => {
+  const fixture = createGame(1);
+  for (const city of fixture.cities) if (city.owner >= 2) city.owner = -1;
+  for (const army of fixture.armies) if (army.owner >= 2) army.owner = -1;
+  fixture.armies[0].x = 35;
+  fixture.armies[0].units = Array.from({ length: 12 }, () => 'rider');
+  fixture.armies[0].movement = 8;
+  fixture.armies[1].units = ['soldier'];
+  await importCampaign(page, fixture, 'Final battle');
+  await page.getByLabel('Column', { exact: true }).fill('37');
+  await page.getByLabel('Row', { exact: true }).fill('4');
+  await page.getByRole('button', { name: 'Inspect tile', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm march to (37, 4)', exact: true }).click();
+  await expect(page.getByText('Victory! The realm is united under your banner.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'End turn', exact: true })).toBeDisabled();
+});
+
+test('pauses a stale tab rather than overwriting newer progress', async ({ page, context }) => {
+  await createCampaign(page, 'Shared realm');
+  const second = await context.newPage();
+  await second.goto('/');
+  await second.getByRole('button', { name: 'Continue Shared realm', exact: true }).click();
+  await expect(second.getByText('Your gold: 100', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Recruit hero' }).click();
+  await expect(page.getByText('Your gold: 30', { exact: false })).toBeVisible();
+  await second.getByRole('button', { name: 'Recruit guards' }).click();
+  await expect(second.getByRole('alert')).toContainText('Another tab changed this game');
+  await expect(second.getByRole('button', { name: 'End turn', exact: true })).toBeDisabled();
+  second.once('dialog', dialog => dialog.accept());
+  await second.getByRole('button', { name: 'Reload latest save', exact: true }).click();
+  await expect(second.getByText('Your gold: 30', { exact: false })).toBeVisible();
+  await expect(second.getByText('Rowan', { exact: true })).toBeVisible();
+  await expect(second.getByRole('alert')).toBeHidden();
+});
