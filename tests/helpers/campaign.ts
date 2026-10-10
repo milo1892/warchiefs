@@ -9,6 +9,7 @@ export async function createCampaign(page: Page, name = 'Test realm', url = '/')
   await page.getByRole('button', { name: 'Create campaign', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Campaigns and saves' })).toBeHidden();
   await expect(page.getByText('2 soldiers, 1 guard, 1 rider.', { exact: false })).toBeVisible();
+  await expect(page.locator('canvas')).toHaveAttribute('data-art-ready', 'true');
 }
 
 export async function openSaves(page: Page) {
@@ -24,4 +25,5 @@ export async function importCampaign(page: Page, state: GameState, name: string)
   await input.setInputFiles({ name: `${name}.json`, mimeType: 'application/json', buffer: Buffer.from(exportText(state)) });
   await expect(saves.getByRole('button', { name: `Continue ${name}`, exact: true })).toBeVisible();
   await saves.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page.locator('canvas')).toHaveAttribute('data-art-ready', 'true');
 }

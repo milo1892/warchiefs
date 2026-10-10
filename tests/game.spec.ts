@@ -55,6 +55,7 @@ test('reopens cached saves with the network disabled', async ({ page, context })
   await page.getByRole('button', { name: 'Continue Offline realm', exact: true }).click();
   await expect(page.getByText('Your gold: 30', { exact: false })).toBeVisible();
   await expect(page.getByText('Rowan', { exact: true })).toBeVisible();
+  await expect(page.locator('canvas')).toHaveAttribute('data-art-ready', 'true');
   await page.getByLabel('Realm map. Arrow keys select tiles.', { exact: false }).focus();
   await page.keyboard.press('ArrowRight');
   await page.getByRole('button', { name: 'Confirm march to (5, 4)', exact: true }).click();

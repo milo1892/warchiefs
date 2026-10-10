@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { applyUpdate } from './applyUpdate';
+import { ATLAS_URL } from '../map/art/atlas';
 
 async function cachedShellReady(): Promise<boolean> {
   const scripts = [...document.querySelectorAll<HTMLScriptElement>('script[type="module"][src]')].map(s => s.src);
   const styles = [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map(s => s.href);
-  const urls = ['/index.html', '/icon-192.png', '/icon-512.png', ...scripts, ...styles];
+  const urls = ['/index.html', '/icon-192.png', '/icon-512.png', ATLAS_URL, ...scripts, ...styles];
   const matches = await Promise.all(urls.map(url => caches.match(new URL(url, location.origin), { ignoreSearch: true })));
   return matches.every(response => response?.ok);
 }

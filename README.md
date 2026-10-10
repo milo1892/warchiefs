@@ -41,12 +41,51 @@ transactions, conflicts, recovery, and failed-write retry.
   sessions, and offline lifecycle.
 - `src/persistence`: runtime validation, explicit snapshot migration, IndexedDB.
 - `tests`: Playwright browser workflows.
-- `public`: original icons. `npm run generate:icons` regenerates PNGs from the
-  checked-in source generator.
+- `public`: original icons and the generated `art/atlas.png` sprite sheet.
+- `src/features/map/art`: typed sprite metadata, terrain geometry, loading and
+  cached background artwork.
+- `scripts/art`: small TypeScript pixel-art painters and the shared PNG encoder.
 
 Vite uses separate app and Node TypeScript projects. Linting enforces React
 hook dependencies, a function-size budget, complexity limits, and TypeScript
 conventions. Domain rules have no React or browser storage dependency.
+
+## Graphics
+
+The map uses an original 59-sprite pixel-art atlas: textured grass/water,
+riverbanks, decorative roads, wooden bridges, overlapping oak/pine foliage,
+compact mountain clusters, castles, ruins, and soldier/guard/rider/hero figures.
+The visual grid is hidden by default; **Show tile grid** enables it for planning.
+
+Castle silhouettes share the same logical footprint and gameplay. Alder uses
+timber/green accents, Dawn pale stone/gold, Ember dark stone/red, and Tide gray
+stone/slate blue; neutral forts are muted. Flags and distinct crests identify
+ownership as well as color. Captures immediately change the displayed castle
+variant and pennant. Army badges remain on top of scenery.
+
+Roads are decorative connections between settlements, derived from passable
+terrain without troop or diplomacy state. **They do not change movement costs.**
+Graphics variations use an independent coordinate hash, never the gameplay RNG.
+Existing saves and map layouts are unchanged.
+
+Terrain/roads/foliage are rendered once into a cached background; ownership,
+units, paths, and selection are separate live layers. The atlas is preloaded,
+checked for the expected dimensions, and included in offline cache verification.
+Missing artwork produces an explicit error and retry control, not silent
+placeholder graphics.
+
+```sh
+npm run generate:art
+npm run generate:icons
+npm run generate:assets
+```
+
+Generation uses Node's TypeScript stripping flag and built-in PNG compression;
+no external art service or image-processing dependency is required. Edit the
+typed recipes/palettes/painters, regenerate the checked-in PNG, and rebuild.
+All artwork is created from the project source, not copied or traced from the
+inspiration image or an existing game. This is the first art pass, not a claim
+that final production artwork or physical-device graphics profiling is complete.
 
 ## Playing
 

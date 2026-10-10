@@ -7,6 +7,7 @@ export function GuideDialog({ onClose }: { onClose: () => void }) {
     <h3>Order armies</h3>
     <p>Tap an army or use Your armies. Tap a destination to preview a route, then confirm the march. Long routes advance only as far as current movement allows. Drag the map to pan; pinch or use zoom buttons. Arrow keys and coordinate fields provide keyboard controls.</p>
     <p>Water and mountains are impassable; cross rivers at bridges. Forest costs two movement points, other passable terrain one. Stacks contain up to 12 units. Enter a friendly army to merge; splitting requires an empty adjacent non-city tile.</p>
+    <p>Roads are decorative and do not grant movement bonuses. Show tile grid reveals the underlying cells; scenery and castle styles do not change their logical footprint or rules.</p>
     <h3>Muster and conquer</h3>
     <p>Each city earns 12 gold at the beginning of your turn. A recruitment order completes after its displayed number of owner turns. A full garrison stalls production until there is space. Capturing a city cancels its recruitment.</p>
     <p>Combat resolves automatically with seeded randomness, one casualty per exchange. Larger, stronger armies have better odds. City defenders gain 25% strength. Battles consume remaining movement. Dead heroes cannot be recovered; a new hero may be recruited.</p>

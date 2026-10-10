@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "npm run lint && npm test && npm run build",
-    "generate:icons": "node scripts/generate-icons.mjs"
+    "generate:icons": "node --experimental-strip-types scripts/generate-icons.ts",
+    "generate:art": "node --experimental-strip-types scripts/generate-art.ts",
+    "generate:assets": "npm run generate:icons && npm run generate:art"
   },
   "dependencies": {
     "idb": "^8.0.3",
